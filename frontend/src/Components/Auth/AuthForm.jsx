@@ -1,3 +1,4 @@
+// src/Components/Auth/AuthForm.jsx
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { auth } from "../../Firebase/config";
@@ -17,6 +18,9 @@ const AuthForm = () => {
   });
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
+
+  const ADMIN_EMAIL = "admin@example.com";  // 🔹 Admin email
+  const ADMIN_PASSWORD = "admin123";       // 🔹 Admin password
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -52,23 +56,39 @@ const AuthForm = () => {
     setLoading(true);
     try {
       if (isLogin) {
-        // ✅ LOGIN FLOW
-        await signInWithEmailAndPassword(auth, formData.email, formData.password);
-        alert("✅ Logged in successfully!");
-        navigate("/home");
-      } else {
-        // ✅ REGISTER FLOW
-        const userCredential = await createUserWithEmailAndPassword(
+        // 🔹 Check if admin login
+        if (
+          formData.email === ADMIN_EMAIL &&
+          formData.password === ADMIN_PASSWORD
+        ) {
+          localStorage.setItem("isAdmin", "true"); // mark admin
+          alert("✅ Admin logged in!");
+          navigate("/admin");
+          return;
+        }
+
+        // 🔹 Normal user login via Firebase
+        const userCredential = await signInWithEmailAndPassword(
           auth,
           formData.email,
           formData.password
         );
 
-        // Immediately log out after registration
+        alert("✅ Logged in successfully!");
+        navigate("/home");
+      } else {
+        // 🔹 Register new user
+        await createUserWithEmailAndPassword(
+          auth,
+          formData.email,
+          formData.password
+        );
+
+        // Log out immediately after registration
         await signOut(auth);
 
         alert("🎉 Registration successful! Please log in to continue.");
-        setIsLogin(true); // switch form to login
+        setIsLogin(true);
         setFormData({ email: "", password: "", confirmPassword: "" });
       }
     } catch (error) {
@@ -88,9 +108,7 @@ const AuthForm = () => {
         <form onSubmit={handleSubmit} className="space-y-4">
           {/* EMAIL */}
           <div>
-            <label className="block text-sm font-medium text-gray-700">
-              Email
-            </label>
+            <label className="block text-sm font-medium text-gray-700">Email</label>
             <input
               type="email"
               name="email"
@@ -108,9 +126,7 @@ const AuthForm = () => {
 
           {/* PASSWORD */}
           <div>
-            <label className="block text-sm font-medium text-gray-700">
-              Password
-            </label>
+            <label className="block text-sm font-medium text-gray-700">Password</label>
             <input
               type="password"
               name="password"
@@ -126,7 +142,7 @@ const AuthForm = () => {
             )}
           </div>
 
-          {/* CONFIRM PASSWORD (REGISTER ONLY) */}
+          {/* CONFIRM PASSWORD (Register only) */}
           {!isLogin && (
             <div>
               <label className="block text-sm font-medium text-gray-700">
@@ -143,9 +159,7 @@ const AuthForm = () => {
                 placeholder="Confirm password"
               />
               {errors.confirmPassword && (
-                <p className="text-red-600 text-sm mt-1">
-                  {errors.confirmPassword}
-                </p>
+                <p className="text-red-600 text-sm mt-1">{errors.confirmPassword}</p>
               )}
             </div>
           )}
@@ -154,11 +168,10 @@ const AuthForm = () => {
             <p className="text-red-600 text-sm">{errors.submit}</p>
           )}
 
-          {/* BUTTON */}
           <button
             type="submit"
             disabled={loading}
-            className="w-full py-2 px-4 bg-black text-white px-4 py-2 rounded-md hover:bg-white hover:text-black border transition disabled:opacity-50"
+            className="w-full py-2 px-4 bg-black text-white rounded-md hover:bg-white hover:text-black border transition disabled:opacity-50"
           >
             {loading ? "Processing..." : isLogin ? "Sign In" : "Sign Up"}
           </button>
