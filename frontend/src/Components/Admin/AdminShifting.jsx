@@ -17,37 +17,20 @@ const AdminShifting = () => {
     }
   };
 
-  const handleDeleteOrder = async (id) => {
+  // ✅ FRONTEND DELETE ONLY
+  const handleDeleteOrder = (_id) => {
     if (!window.confirm("Delete this shifting order?")) return;
-    try {
-      const res = await fetch(`http://localhost:5000/api/shifting-orders/${id}`, {
-        method: "DELETE",
-      });
-      const data = await res.json();
-      if (data.success) {
-        setOrders((prev) => prev.filter((o) => o.id !== id));
-        alert("✅ Order deleted successfully!");
-      } else {
-        alert("❌ Failed to delete order.");
-      }
-    } catch (error) {
-      console.error("Error deleting order:", error);
-    }
+
+    setOrders((prev) => prev.filter((o) => o._id !== _id));
   };
 
-  const handleMarkComplete = async (id) => {
-    try {
-      const res = await fetch(`http://localhost:5000/api/shifting-orders/${id}/complete`, {
-        method: "PUT",
-      });
-      const data = await res.json();
-      if (data.success) {
-        alert("✅ Order marked as completed!");
-        fetchOrders();
-      }
-    } catch (error) {
-      console.error("Error completing order:", error);
-    }
+  // ✅ FRONTEND COMPLETE ONLY
+  const handleMarkComplete = (_id) => {
+    setOrders((prev) =>
+      prev.map((o) =>
+        o._id === _id ? { ...o, status: "Completed" } : o
+      )
+    );
   };
 
   return (
@@ -71,45 +54,41 @@ const AdminShifting = () => {
                 <th className="border p-2">Action</th>
               </tr>
             </thead>
+
             <tbody>
               {orders.map((o) => (
-                <tr key={o.id} className="hover:bg-gray-50">
+                <tr key={o._id} className="hover:bg-gray-50">
                   <td className="border p-2">{o.name}</td>
                   <td className="border p-2">{o.phone}</td>
-                  <td className="border p-2">
-                    <div>{o.from_location}</div>
-                    <div className="text-xs text-gray-500">
-                      Floor: {o.from_floor || "N/A"}
-                    </div>
-                  </td>
-                  <td className="border p-2">
-                    <div>{o.to_location}</div>
-                    <div className="text-xs text-gray-500">
-                      Floor: {o.to_floor || "N/A"}
-                    </div>
-                  </td>
+                  <td className="border p-2">{o.from_location}</td>
+                  <td className="border p-2">{o.to_location}</td>
                   <td className="border p-2">{o.shift_type}</td>
                   <td className="border p-2">{o.date}</td>
-                  <td className="border p-2">
+
+                  <td className="border p-2 text-center">
                     <span
-                      className={`px-2 py-1 text-white rounded ${
-                        o.status === "Completed" ? "bg-green-600" : "bg-yellow-500"
+                      className={`px-2 py-1 rounded text-white ${
+                        o.status === "Completed"
+                          ? "bg-green-600"
+                          : "bg-yellow-500"
                       }`}
                     >
                       {o.status || "Pending"}
                     </span>
                   </td>
+
                   <td className="border p-2 text-center space-x-2">
                     {o.status !== "Completed" && (
                       <button
-                        onClick={() => handleMarkComplete(o.id)}
-                        className="bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600"
+                        onClick={() => handleMarkComplete(o._id)}
+                        className="bg-green-500 text-white px-3 py-1 rounded hover:bg-green-600"
                       >
                         Complete
                       </button>
                     )}
+
                     <button
-                      onClick={() => handleDeleteOrder(o.id)}
+                      onClick={() => handleDeleteOrder(o._id)}
                       className="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600"
                     >
                       Delete
@@ -118,6 +97,7 @@ const AdminShifting = () => {
                 </tr>
               ))}
             </tbody>
+
           </table>
         </div>
       )}
